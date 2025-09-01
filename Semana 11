@@ -1,0 +1,193 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class Program
+{
+    // Diccionarios para almacenar las traducciones en ambos sentidos
+    static Dictionary<string, string> engToSpa = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    static Dictionary<string, string> spaToEng = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+    static void Main(string[] args)
+    {
+        InitializeDictionary();
+        
+        int option;
+        do
+        {
+            Console.Clear();
+            DisplayMenu();
+            
+            if (int.TryParse(Console.ReadLine(), out option))
+            {
+                switch (option)
+                {
+                    case 1:
+                        TranslatePhrase();
+                        break;
+                    case 2:
+                        AddWordToDictionary();
+                        break;
+                    case 0:
+                        Console.WriteLine("¡Gracias por usar el traductor!");
+                        break;
+                    default:
+                        Console.WriteLine("Opción no válida. Intente de nuevo.");
+                        break;
+                }
+                
+                if (option != 0)
+                {
+                    Console.WriteLine("\nPresione cualquier tecla para continuar...");
+                    Console.ReadKey();
+                }
+            }
+            else
+            {
+                Console.WriteLine("Por favor, ingrese un número válido.");
+            }
+        } while (option != 0);
+    }
+
+    static void DisplayMenu()
+    {
+        Console.WriteLine("==================== MENÚ ====================");
+        Console.WriteLine("1. Traducir una frase");
+        Console.WriteLine("2. Agregar palabras al diccionario");
+        Console.WriteLine("0. Salir");
+        Console.WriteLine("==============================================");
+        Console.Write("Seleccione una opción: ");
+    }
+
+    static void InitializeDictionary()
+    {
+        // Palabras base sugeridas
+        AddWordPair("time", "tiempo");
+        AddWordPair("person", "persona");
+        AddWordPair("year", "año");
+        AddWordPair("way", "camino");
+        AddWordPair("day", "día");
+        AddWordPair("thing", "cosa");
+        AddWordPair("man", "hombre");
+        AddWordPair("world", "mundo");
+        AddWordPair("life", "vida");
+        AddWordPair("hand", "mano");
+        AddWordPair("part", "parte");
+        AddWordPair("child", "niño");
+        AddWordPair("eye", "ojo");
+        AddWordPair("woman", "mujer");
+        AddWordPair("place", "lugar");
+        AddWordPair("work", "trabajo");
+        AddWordPair("week", "semana");
+        AddWordPair("case", "caso");
+        AddWordPair("point", "punto");
+        AddWordPair("government", "gobierno");
+        AddWordPair("company", "empresa");
+    }
+
+    static void AddWordPair(string englishWord, string spanishWord)
+    {
+        engToSpa[englishWord] = spanishWord;
+        spaToEng[spanishWord] = englishWord;
+    }
+
+    static void TranslatePhrase()
+    {
+        Console.Write("Ingrese la frase a traducir: ");
+        string phrase = Console.ReadLine();
+        
+        if (string.IsNullOrWhiteSpace(phrase))
+        {
+            Console.WriteLine("No se ingresó ninguna frase.");
+            return;
+        }
+        
+        // Detectar idioma de origen (inglés o español)
+        bool isEnglish = DetectLanguage(phrase);
+        
+        string[] words = phrase.Split(' ');
+        List<string> translatedWords = new List<string>();
+        
+        foreach (string word in words)
+        {
+            string cleanWord = CleanWord(word);
+            string translatedWord = TranslateWord(cleanWord, isEnglish);
+            
+            // Mantener la puntuación original
+            string punctuation = GetPunctuation(word);
+            translatedWords.Add(translatedWord + punctuation);
+        }
+        
+        string translatedPhrase = string.Join(" ", translatedWords);
+        Console.WriteLine($"Traducción: {translatedPhrase}");
+    }
+
+    static bool DetectLanguage(string phrase)
+    {
+        // Contar palabras que existen en cada diccionario para detectar el idioma
+        string[] words = phrase.Split(' ');
+        int englishCount = 0;
+        int spanishCount = 0;
+        
+        foreach (string word in words)
+        {
+            string cleanWord = CleanWord(word);
+            
+            if (engToSpa.ContainsKey(cleanWord))
+                englishCount++;
+            
+            if (spaToEng.ContainsKey(cleanWord))
+                spanishCount++;
+        }
+        
+        return englishCount >= spanishCount;
+    }
+
+    static string CleanWord(string word)
+    {
+        // Eliminar signos de puntuación para buscar en el diccionario
+        return new string(word.Where(c => !char.IsPunctuation(c)).ToArray()).ToLower();
+    }
+
+    static string GetPunctuation(string word)
+    {
+        // Extraer los signos de puntuación al final de la palabra
+        return new string(word.Where(char.IsPunctuation).ToArray());
+    }
+
+    static string TranslateWord(string word, bool isEnglish)
+    {
+        if (isEnglish)
+        {
+            if (engToSpa.TryGetValue(word, out string translation))
+                return translation;
+        }
+        else
+        {
+            if (spaToEng.TryGetValue(word, out string translation))
+                return translation;
+        }
+        
+        // Si no se encuentra la traducción, devolver la palabra original
+        return word;
+    }
+
+    static void AddWordToDictionary()
+    {
+        Console.Write("Ingrese la palabra en inglés: ");
+        string englishWord = Console.ReadLine().ToLower().Trim();
+        
+        Console.Write("Ingrese la traducción al español: ");
+        string spanishWord = Console.ReadLine().ToLower().Trim();
+        
+        if (!string.IsNullOrWhiteSpace(englishWord) && !string.IsNullOrWhiteSpace(spanishWord))
+        {
+            AddWordPair(englishWord, spanishWord);
+            Console.WriteLine($"Palabra '{englishWord}' agregada con éxito.");
+        }
+        else
+        {
+            Console.WriteLine("Error: ambas palabras deben tener contenido.");
+        }
+    }
+}
